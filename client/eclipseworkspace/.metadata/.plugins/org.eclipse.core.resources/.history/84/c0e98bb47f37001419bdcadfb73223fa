@@ -35,10 +35,10 @@ public class Main {
 			Thread.sleep(1000);
 			
 			DataOutputStream dataout = new DataOutputStream(sock.getOutputStream());
-			
-			dataout.writeInt(9);
-			dataout.writeInt(5);
-			dataout.writeChars("Hallo");
+			dataout.writeBytes("9 5 Hallo");
+//			dataout.writeInt(9);
+//			dataout.writeInt(5);
+//			dataout.writeChars("9 5 Hallo");
 			
 			dataout.flush();
 			

@@ -1,9 +1,11 @@
 package startat.de.thegame.client;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 
@@ -32,12 +34,9 @@ public class Main {
 			
 			System.out.println("Creating Writer and sending");
 
-			Thread.sleep(1000);
-			
 			DataOutputStream dataout = new DataOutputStream(sock.getOutputStream());
-			
-			dataout.writeInt(9);
 			dataout.writeInt(5);
+			dataout.writeInt(9);
 			dataout.writeChars("Hallo");
 			
 			dataout.flush();
@@ -49,7 +48,6 @@ public class Main {
 //			out.flush();
 //			
 			
-			Thread.sleep(1000);
 			
 			in.close();
 			dataout.close();
@@ -59,9 +57,6 @@ public class Main {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

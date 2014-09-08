@@ -1,0 +1,48 @@
+package startat.de.thegame.client;
+
+import java.awt.peer.TextComponentPeer;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+
+public class Main {
+	public static void main(String[] args) {
+		String host = args[0];
+		Integer port = Integer.valueOf(args[1]);
+		
+		System.out.println("attempt send to " + host + ":" + port);
+		
+		InetAddress addr;
+		
+		try {
+			System.out.println("Resolving Address");
+			addr = InetAddress.getByName(host);
+			
+			System.out.println("Connecting Port");
+			Socket out = new Socket(addr, port);
+			
+			System.out.println("Creating Writer and sending");
+
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(out.getOutputStream()));
+			bw.write("Client ist fertig!");
+			// zeilenumbruch senden
+			bw.newLine();
+			bw.flush();
+			
+		} catch (NumberFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
+		
+	}
+}

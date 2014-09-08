@@ -32,10 +32,8 @@ public class Main {
 			
 			System.out.println("Creating Writer and sending");
 
-			Thread.sleep(1000);
-			
 			DataOutputStream dataout = new DataOutputStream(sock.getOutputStream());
-			
+//			dataout.writeBytes("5 9 Hallo");
 			dataout.writeInt(9);
 			dataout.writeInt(5);
 			dataout.writeChars("Hallo");
@@ -49,7 +47,6 @@ public class Main {
 //			out.flush();
 //			
 			
-			Thread.sleep(1000);
 			
 			in.close();
 			dataout.close();
@@ -59,9 +56,6 @@ public class Main {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

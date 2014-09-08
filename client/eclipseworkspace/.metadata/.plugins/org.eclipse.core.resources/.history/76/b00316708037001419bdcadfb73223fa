@@ -34,7 +34,7 @@ public class Main {
 
 			Thread.sleep(1000);
 			
-			DataOutputStream dataout = new DataOutputStream(sock.getOutputStream());
+			EndianCorrectOutputStream dataout = new EndianCorrectOutputStream(sock.getOutputStream());
 			
 			dataout.writeInt(9);
 			dataout.writeInt(5);
