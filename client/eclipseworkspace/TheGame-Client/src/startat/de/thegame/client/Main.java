@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.*;
 
 public class Main {
 	public static void main(String[] args) {
@@ -35,10 +36,14 @@ public class Main {
 			Thread.sleep(1000);
 			
 			DataOutputStream dataout = new DataOutputStream(sock.getOutputStream());
-			
-			dataout.writeInt(9);
-			dataout.writeInt(5);
-			dataout.writeChars("Hallo");
+
+            ByteBuffer buffer = ByteBuffer.allocate( 13 );
+            buffer.order( ByteOrder.LITTLE_ENDIAN );
+            buffer.putInt( 9 );
+            buffer.putInt( 5 );
+            buffer.put( new String( "Hallo" ).getBytes() );
+
+            dataout.write( buffer.array(), 0, buffer.capacity() );
 			
 			dataout.flush();
 			
