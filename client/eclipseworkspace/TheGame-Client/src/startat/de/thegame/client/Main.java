@@ -10,7 +10,7 @@ import java.net.Socket;
 import java.nio.*;
 
 public class Main {
-	public static void main(String[] args) {
+    public static void main(String[] args) {
         String host = "127.0.0.1";
         Integer port = 7777;
 
@@ -19,15 +19,15 @@ public class Main {
 
         if(args.length > 1)
             port = Integer.valueOf(args[1]);
-		
-		try {
-			System.out.println("Resolving Address");
-			InetAddress addr = InetAddress.getByName(host);
-			
-			System.out.println("Connecting Port");
-			Socket sock = new Socket(addr, port);
-			
-			{ System.out.println("Receiving:");
+        
+        try {
+            System.out.println("Resolving Address");
+            InetAddress addr = InetAddress.getByName(host);
+            
+            System.out.println("Connecting Port");
+            Socket sock = new Socket(addr, port);
+            
+            { System.out.println("Receiving:");
                 DataInputStream in = new DataInputStream(sock.getInputStream());
                 int packetSize = in.readInt();
                 System.out.println("    Size of packet: " + packetSize);
@@ -35,29 +35,32 @@ public class Main {
                 System.out.println("    Type of packet: " + packetType);
             }
 
-			Thread.sleep(1000);
-			
-            { System.out.println("Sending:");
+            Thread.sleep(1000);
+            
+            { System.out.println("Loggin in:");
                 DataOutputStream out = new DataOutputStream(sock.getOutputStream());
-                out.writeInt(4);
-                out.writeInt(0x00000001);
+                out.writeInt(16);           // packet size
+                out.writeInt(0x00000001);   // packet type (LOGIN)
+                out.writeInt(8);            // name length
+                out.writeBytes("Testuser"); // name
                 out.flush();
                 sock.getOutputStream().flush();
             }
 
-			Thread.sleep(5000);
-			
-			sock.close();
-			
-		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+            while(true)
+            { }
+            
+            // sock.close();
+            
+        } catch (NumberFormatException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 }

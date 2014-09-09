@@ -154,6 +154,7 @@
     PacketSelector::PacketSelector(
         std::function< void ( std::unique_ptr< NetEvent > ) > callback )
         : m_callback( std::move( callback ) )
+        , m_running( true )
     {
         m_epoll = epoll_create1( 0 );
 
@@ -171,14 +172,14 @@
 
     PacketSelector::~PacketSelector()
     {
-        notify();
+        m_running = false;
         close( m_pipe[ 0 ] );
         close( m_pipe[ 1 ] );
     }
 
     void PacketSelector::wait()
     {
-        while( true )
+        while( m_running )
         {
             // process socket changes
             {
@@ -187,6 +188,9 @@
                 while( !m_addList.empty() )
                 {
                     auto container = m_addList.front();
+                    m_addList.pop_front();
+
+                    lock.unlock();
 
                     struct epoll_event event;
                     event.events = EPOLLIN;
@@ -196,7 +200,7 @@
                     m_callback( std::unique_ptr< NetEvent >( new NetEvent(
                         NetEvent::Type::CONNECT, container ) ) );
 
-                    m_addList.pop_front();
+                    lock.lock();
                 }
 
                 // remove socket handles
@@ -204,9 +208,10 @@
                 {
                     auto handle = m_removeList.front();
 
+                    m_removeList.pop_front();
+
                     epoll_ctl( m_epoll, EPOLL_CTL_DEL, handle, NULL );
 
-                    m_removeList.pop_front();
                 }
             }
 
@@ -231,7 +236,8 @@
 
                 default: // events available
                 {
-                    for( int i = 0; i < num; ++i )
+                    // only do one event at a time to directly apply list changes
+                    for( int i = 0; i < 1 /* num */; ++i )
                     {
                         if( m_events[ i ].data.ptr == NULL )
                         {

@@ -10,28 +10,15 @@
 
 Authenticator::Authenticator(
     std::function< void ( std::unique_ptr< Client > ) > callback )
-    : m_running( true )
-    , m_callback( callback )
-    , m_packetSelector(
+    : m_receiver(
         std::bind( &Authenticator::messageCallback, this, std::placeholders::_1 ) )
-    , m_thread(
-        std::bind( &Authenticator::run, this ) )
+    , m_callback( callback )
 { }
-
-Authenticator::~Authenticator()
-{
-    std::unique_lock< std::mutex > lock( m_mutex );
-    m_running = false;
-    m_packetSelector.notify();
-    lock.unlock();
-
-    m_thread.join();
-}
 
 void Authenticator::add( std::unique_ptr< TCPSocket > socket )
 {
-    Client* client = new Client( std::move( socket ) );
-    m_packetSelector.add( client );
+    m_receiver.add( socket.get() );
+    socket.release();
 }
 
 void Authenticator::messageCallback( std::unique_ptr< PacketSelector::NetEvent > event )
@@ -66,25 +53,21 @@ void Authenticator::messageCallback( std::unique_ptr< PacketSelector::NetEvent >
             {
                 case SMsg::LOGIN:
                 {
-                    std::cout << "Login" << std::endl;
+                    std::string name = packet->read< std::string >();
+
+                    // login successfull
+                    std::cout << "Player " << name << " logged in" << std::endl;
+                    TCPSocket* socket = static_cast< TCPSocket* >( event->getSource() );
+                    m_receiver.remove( socket );
+
+                    m_callback( std::unique_ptr< Client >( new Client(
+                        std::unique_ptr< TCPSocket >( socket ),
+                        std::move( name ) ) ) );
                 } break;
 
                 default:
-                {
-                    std::cout << "Authenticator does not understand the client" << std::endl;
-                }
+                    std::cout << "Authenticator was unable to understand client" << std::endl;
             }
         } break;
-    }
-}
-
-void Authenticator::run()
-{
-    std::unique_lock< std::mutex > lock( m_mutex );
-    while( m_running )
-    {
-        lock.unlock();
-        m_packetSelector.wait();
-        lock.lock();
     }
 }

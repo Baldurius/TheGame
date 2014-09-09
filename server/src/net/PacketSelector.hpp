@@ -37,6 +37,7 @@ class PacketSelector
         void notify();
 
     private:
+        bool m_running;
         std::function< void ( std::unique_ptr< NetEvent > ) > m_callback;
 
     #ifdef WIN32

@@ -8,6 +8,7 @@
 #include <Client.hpp>
 #include <Authenticator.hpp>
 #include <Acceptor.hpp>
+#include <Lobby.hpp>
 
 #include <iostream>
 
@@ -31,16 +32,15 @@ int main( int argc, char** argv )
 Application::Application( std::vector< std::string > arguments )
 { }
 
-void newClient( std::unique_ptr< Client > client )
-{
-}
-
 void Application::run()
 {
     Socket::init();
 
+    std::unique_ptr< Lobby > lobby( new Lobby() );
+
     std::unique_ptr< Authenticator > authenticator( new Authenticator(
-        newClient ) );
+        std::bind( &Lobby::add, lobby.get(), std::placeholders::_1 ) ) );
+
     std::unique_ptr< Acceptor > acceptor( new Acceptor(
         7777,
         std::bind( &Authenticator::add, authenticator.get(), std::placeholders::_1 ) ) );
