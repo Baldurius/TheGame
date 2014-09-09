@@ -37,13 +37,20 @@ public class Main {
 			
 			DataOutputStream dataout = new DataOutputStream(sock.getOutputStream());
 
+            // Little endian
+            /*
             ByteBuffer buffer = ByteBuffer.allocate( 13 );
-            buffer.order( ByteOrder.LITTLE_ENDIAN );
+            buffer.order( ByteOrder.BIG_ENDIAN );
             buffer.putInt( 9 );
             buffer.putInt( 5 );
             buffer.put( new String( "Hallo" ).getBytes() );
-
             dataout.write( buffer.array(), 0, buffer.capacity() );
+            */
+
+            // Big endian
+            dataout.writeInt( 9 );
+            dataout.writeInt( 5 );
+            dataout.writeBytes( "Hallo" );
 			
 			dataout.flush();
 			

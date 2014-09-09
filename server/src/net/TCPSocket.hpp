@@ -30,9 +30,9 @@ class TCPSocket : public SocketContainer
         friend class Listener;
 
     #ifdef WIN32
-        SOCKET handle() const;
+        SOCKET getHandle() const;
     #else
-        int handle() const;
+        int getHandle() const;
     #endif
 
     private:
@@ -53,13 +53,13 @@ inline const TCPSocket* TCPSocket::getSocket() const
 }
 
 #ifdef WIN32
-inline SOCKET TCPSocket::handle() const
+inline SOCKET TCPSocket::getHandle() const
 {
     return m_socket;
 }
 
 #else
-inline int TCPSocket::handle() const
+inline int TCPSocket::getHandle() const
 {
     return m_socket;
 }

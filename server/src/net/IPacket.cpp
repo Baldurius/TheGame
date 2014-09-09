@@ -13,6 +13,11 @@ IPacket* IPacket::fromTCPSocket( const TCPSocket* socket )
     while( done < sizeof( uint32_t ) )
         done += socket->receive( reinterpret_cast< uint8_t* >( &size + done ), sizeof( uint32_t ) - done );
 
+    size = ( ( ( size >> 24 ) & 0xFF )       )
+         | ( ( ( size >> 16 ) & 0xFF ) << 8  )
+         | ( ( ( size >> 8  ) & 0xFF ) << 16 )
+         | ( ( ( size       ) & 0xFF ) << 24 );
+
     uint8_t* buffer = static_cast< uint8_t* >( operator new( size ) );
     done = 0;
     try
@@ -56,6 +61,17 @@ void IPacket::read( uint8_t* data, uint32_t size )
     if( size > m_size - m_cursor )
         throw 0;
 
-    memcpy( static_cast< void* >( data ), static_cast< const void* >( m_buffer + m_cursor ), size );
+    // little endian
+    //memcpy( static_cast< void* >( data ), static_cast< const void* >( m_buffer + m_cursor ), size );
+
+    for( uint32_t c = 0; c < size; ++c )
+        data[ size - c - 1 ] = *( m_buffer + m_cursor + c );
+
+    // big endian
+    /*
+    for( uint32_t c = 0; c < size; ++c )
+        data[ c ] = *( m_buffer + m_cursor + c );
+    */
+
     m_cursor += size;
 }

@@ -24,18 +24,19 @@ class PacketSelector
         template< class T >
         class NetEvent_Impl;
 
-        PacketSelector();
+        PacketSelector(
+            std::function< void ( std::unique_ptr< NetEvent > ) > callback );
 
         ~PacketSelector();
 
-        void wait( std::function< void ( std::unique_ptr< NetEvent > event ) > callback );
+        void wait();
 
         void add( SocketContainer* container );
 
         void notify();
 
     private:
-        bool m_running;
+        std::function< void ( std::unique_ptr< NetEvent > ) > m_callback;
 
     #ifdef WIN32
         std::mutex m_containerMutex;
@@ -48,7 +49,7 @@ class PacketSelector
         int m_pipe[ 2 ];
         int m_epoll;
         struct epoll_event m_events[ 64 ];
-        std::mutex m_containerMutex;
+        std::mutex m_mutex;
         std::list< SocketContainer* > m_newContainer;
     #endif
 };

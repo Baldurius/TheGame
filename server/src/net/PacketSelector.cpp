@@ -14,7 +14,9 @@
     {
     }
 
-    PacketSelector::PacketSelector()
+    PacketSelector::PacketSelector(
+        std::function< void ( std::unique_ptr< NetEvent > ) callback )
+        : m_callback( std::move( callback ) )
     {
         m_notifyEvent = CreateEvent( NULL, TRUE, FALSE, NULL );
         m_events = new WSAEVENT[ 1 ];
@@ -149,7 +151,9 @@
     {
     }
 
-    PacketSelector::PacketSelector()
+    PacketSelector::PacketSelector(
+        std::function< void ( std::unique_ptr< NetEvent > ) > callback )
+        : m_callback( std::move( callback ) )
     {
         m_epoll = epoll_create1( 0 );
 
@@ -167,112 +171,119 @@
 
     PacketSelector::~PacketSelector()
     {
+        notify();
         close( m_pipe[ 0 ] );
         close( m_pipe[ 1 ] );
     }
 
-    void PacketSelector::wait( std::function< void ( std::unique_ptr< NetEvent > event ) > callback )
+    void PacketSelector::wait()
     {
-        bool rebuildList = false;
-        m_running = true;
         while( true )
         {
-            int num = epoll_wait( m_epoll, m_events, 64, -1 );
-
-            if( num == -1 )
+            // add new sockets
             {
-                switch( errno )
+                std::unique_lock< std::mutex > lock( m_mutex );
+                for( auto i = m_newContainer.begin();
+                     i != m_newContainer.end();
+                     i = m_newContainer.erase( i ) )
                 {
-                    case EINTR:
-                        break;
-                    default:
-                        std::cout << "EPOLL-ERROR: " << errno << std::endl;
+                    {
+                        struct epoll_event event;
+                        event.events = EPOLLIN;
+                        event.data.ptr = *i;
+                        if( epoll_ctl( m_epoll, EPOLL_CTL_ADD, (*i)->getSocket()->getHandle(), &event ) == -1 )
+                            std::cout << "EPOLL-ADD_ERROR: " << errno << std::endl;
+                    }
+
+                    m_callback( std::unique_ptr< NetEvent >( new NetEvent(
+                        NetEvent::Type::CONNECT, *i ) ) );
                 }
             }
 
-            bool breakLoop = false;
+            int num = epoll_wait( m_epoll, m_events, 64, -1 );
 
-            for( int i = 0; i < num; ++i )
+            switch( num )
             {
-                if( m_events[ i ].data.ptr == NULL )
+                case -1: // an error occured
                 {
-                    char buff;
-                    read( m_pipe[ 0 ], &buff, 1 );
-
-                    if( !m_running )
-                        breakLoop = true;
-                }
-                else
-                {
-                    SocketContainer* container = static_cast< SocketContainer* >( m_events[ i ].data.ptr );
-
-                    try
+                    switch( errno )
                     {
-                        std::unique_ptr< IPacket > packet( IPacket::fromTCPSocket( container->getSocket() ) );
-
-                        callback( std::unique_ptr< NetEvent >( new NetEvent_Impl< IPacket >(
-                            NetEvent::Type::PACKET,
-                            container,
-                            std::move( packet ) ) ) );
+                        case EINTR:
+                            break;
+                        default:
+                            std::cout << "EPOLL-ERROR: " << errno << std::endl;
+                            return;
                     }
-                    catch( TCPSocket::Error& e )
-                    {
-                        epoll_ctl( m_epoll, EPOLL_CTL_DEL, container->getSocket()->handle(), NULL );
+                } break;
 
-                        switch( e )
+                case 0: // no events
+                    break;
+
+                default: // events available
+                {
+                    for( int i = 0; i < num; ++i )
+                    {
+                        if( m_events[ i ].data.ptr == NULL )
                         {
-                            case TCPSocket::Error::CLOSED:
-                                callback( std::unique_ptr< NetEvent >( new NetEvent( NetEvent::Type::CLOSED, container ) ) );
-                                break;
-                            case TCPSocket::Error::BROKEN:
-                                callback( std::unique_ptr< NetEvent >( new NetEvent( NetEvent::Type::BROKEN, container ) ) );
-                                break;
-                            default:
-                                break;
+                            char buff;
+                            read( m_pipe[ 0 ], &buff, 1 );
+                            if( buff == '1' )
+                                return;
+                        }
+                        else
+                        {
+                            SocketContainer* container = static_cast< SocketContainer* >( m_events[ i ].data.ptr );
+
+                            try
+                            {
+                                std::unique_ptr< IPacket > packet( IPacket::fromTCPSocket( container->getSocket() ) );
+
+                                m_callback( std::unique_ptr< NetEvent >( new NetEvent_Impl< IPacket >(
+                                    NetEvent::Type::PACKET,
+                                    container,
+                                    std::move( packet ) ) ) );
+                            }
+                            catch( TCPSocket::Error& e )
+                            {
+                                epoll_ctl( m_epoll, EPOLL_CTL_DEL, container->getSocket()->getHandle(), NULL );
+
+                                switch( e )
+                                {
+                                    case TCPSocket::Error::CLOSED:
+                                        m_callback( std::unique_ptr< NetEvent >( new NetEvent( NetEvent::Type::CLOSED, container ) ) );
+                                        break;
+                                    case TCPSocket::Error::BROKEN:
+                                        m_callback( std::unique_ptr< NetEvent >( new NetEvent( NetEvent::Type::BROKEN, container ) ) );
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
                         }
                     }
                 }
             }
-
-            // add new sockets
-            m_containerMutex.lock();
-            for( auto i = m_newContainer.begin(); i != m_newContainer.end(); i = m_newContainer.erase( i ) )
-            {
-                {
-                    struct epoll_event event;
-                    event.events = EPOLLIN;
-                    event.data.ptr = *i;
-                    epoll_ctl( m_epoll, EPOLL_CTL_ADD, (*i)->getSocket()->handle(), &event );
-                }
-
-                callback( std::unique_ptr< NetEvent >( new NetEvent(
-                    NetEvent::Type::CONNECT,
-                    *i ) ) );
-            }
-            m_containerMutex.unlock();
-
-            if( breakLoop )
-                break;
         }
     }
 
     void PacketSelector::add( SocketContainer* container )
     {
-        int flags = fcntl( container->getSocket()->handle(), F_GETFL, 0 );
-        flags |= O_NONBLOCK;
-        fcntl( container->getSocket()->handle(), F_SETFL, flags );
-        {
-            std::unique_lock< std::mutex > lock( m_containerMutex );
-            m_newContainer.push_back( container );
-        }
-        char buff = ' ';
+        // set socket into nonblocking mode
+        int flags = fcntl( container->getSocket()->getHandle(), F_GETFL, 0 );
+        fcntl( container->getSocket()->getHandle(), F_SETFL, flags | O_NONBLOCK );
+
+        // add socket to event list
+        std::unique_lock< std::mutex > lock( m_mutex );
+        m_newContainer.push_back( container );
+
+        // notify waiting thread
+        char buff = '0';
         write( m_pipe[ 1 ], &buff, 1 );
     }
 
     void PacketSelector::notify()
     {
-        m_running = false;
-        char buff = ' ';
+        char buff = '1';
         write( m_pipe[ 1 ], &buff, 1 );
     }
 
