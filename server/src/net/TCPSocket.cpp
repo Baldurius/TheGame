@@ -126,7 +126,7 @@
     {
         while( true )
         {
-            int ret = recv( m_socket, reinterpret_cast< char* >( data ), size, 0 );
+            int ret = recv( m_socket, reinterpret_cast< void* >( data ), size, 0 );
 
             if( ret > 0 )
                 return ret;

@@ -21,15 +21,23 @@ void OPacket::write< std::string >( const std::string& value )
 {
     uint32_t len = value.length();
     append( reinterpret_cast< const uint8_t* >( &len ), sizeof( uint32_t ) );
-    append( reinterpret_cast< const uint8_t* >( value.c_str() ), len );
+
+    ensure( len );
+    memcpy( static_cast< void* >( m_buffer + m_size ), static_cast< const void* >( value.c_str() ), len );
+    m_size += len;
 }
 
 void OPacket::send( TCPSocket* socket ) const
 {
     { // send packet length
+        uint32_t size = ( ( ( m_size >> 24 ) & 0xFF )       )
+                      | ( ( ( m_size >> 16 ) & 0xFF ) << 8  )
+                      | ( ( ( m_size >> 8  ) & 0xFF ) << 16 )
+                      | ( ( ( m_size       ) & 0xFF ) << 24 );
+
         uint32_t done = 0;
         while( done < sizeof( uint32_t ) )
-            done += socket->send( reinterpret_cast< const uint8_t* >( &m_size + done ), sizeof( uint32_t ) - done );
+            done += socket->send( reinterpret_cast< const uint8_t* >( &size ) + done, sizeof( uint32_t ) - done );
     }
 
     { // send packet data
@@ -42,7 +50,12 @@ void OPacket::send( TCPSocket* socket ) const
 void OPacket::append( const uint8_t* data, uint32_t size )
 {
     ensure( size );
-    memcpy( static_cast< void* >( m_buffer + m_size ), static_cast< const void* >( data ), size );
+//    memcpy( static_cast< void* >( m_buffer + m_size ), static_cast< const void* >( data ), size );
+
+    // convert big to little endian
+    for( uint32_t c = 0; c < size; ++c )
+        m_buffer[ m_size + size - c - 1 ] = *( data + c );
+
     m_size += size;
 }
 

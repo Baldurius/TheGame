@@ -32,6 +32,7 @@ class PacketSelector
         void wait();
 
         void add( SocketContainer* container );
+        void remove( SocketContainer* container );
 
         void notify();
 
@@ -50,7 +51,9 @@ class PacketSelector
         int m_epoll;
         struct epoll_event m_events[ 64 ];
         std::mutex m_mutex;
-        std::list< SocketContainer* > m_newContainer;
+
+        std::list< SocketContainer* > m_addList;
+        std::list< int > m_removeList;
     #endif
 };
 

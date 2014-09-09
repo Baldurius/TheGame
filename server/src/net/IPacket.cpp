@@ -7,12 +7,13 @@
 
 IPacket* IPacket::fromTCPSocket( const TCPSocket* socket )
 {
-    uint32_t size = 0;
+    uint32_t size;
 
     uint32_t done = 0;
     while( done < sizeof( uint32_t ) )
-        done += socket->receive( reinterpret_cast< uint8_t* >( &size + done ), sizeof( uint32_t ) - done );
+        done += socket->receive( reinterpret_cast< uint8_t* >( &size ) + done, sizeof( uint32_t ) - done );
 
+    // convert big to little endian
     size = ( ( ( size >> 24 ) & 0xFF )       )
          | ( ( ( size >> 16 ) & 0xFF ) << 8  )
          | ( ( ( size >> 8  ) & 0xFF ) << 16 )
@@ -25,7 +26,7 @@ IPacket* IPacket::fromTCPSocket( const TCPSocket* socket )
         while( done < size )
             done += socket->receive( buffer + done, size - done );
     }
-    catch( int i )
+    catch( TCPSocket::Error& i )
     {
         delete buffer;
         throw i;
@@ -48,7 +49,7 @@ std::string IPacket::read< std::string >()
     uint32_t len;
     read( reinterpret_cast< uint8_t* >( &len ), sizeof( uint32_t ) );
     if( len > m_size - m_cursor )
-        throw 0;
+        std::cout << "Unable to receive" << std::endl;
 
     std::string value = std::string( reinterpret_cast< char* >( m_buffer + m_cursor ), len );
     m_cursor += len;
@@ -59,19 +60,14 @@ std::string IPacket::read< std::string >()
 void IPacket::read( uint8_t* data, uint32_t size )
 {
     if( size > m_size - m_cursor )
-        throw 0;
+        std::cout << "Unable to receive" << std::endl;
 
-    // little endian
+    // same endianess on receiver and sender
     //memcpy( static_cast< void* >( data ), static_cast< const void* >( m_buffer + m_cursor ), size );
 
+    // convert big to little endian
     for( uint32_t c = 0; c < size; ++c )
         data[ size - c - 1 ] = *( m_buffer + m_cursor + c );
-
-    // big endian
-    /*
-    for( uint32_t c = 0; c < size; ++c )
-        data[ c ] = *( m_buffer + m_cursor + c );
-    */
 
     m_cursor += size;
 }

@@ -22,7 +22,7 @@ class TCPSocket : public SocketContainer
         TCPSocket( const std::string& address, int port );
         ~TCPSocket();
 
-        const TCPSocket* getSocket() const override;
+        TCPSocket* getSocket() override;
 
         uint32_t send( const uint8_t* data, int32_t size ) const;
         uint32_t receive( uint8_t* data, int32_t size ) const;
@@ -47,7 +47,7 @@ class TCPSocket : public SocketContainer
 
 
 
-inline const TCPSocket* TCPSocket::getSocket() const
+inline TCPSocket* TCPSocket::getSocket()
 {
     return this;
 }

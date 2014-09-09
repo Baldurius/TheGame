@@ -180,23 +180,33 @@
     {
         while( true )
         {
-            // add new sockets
+            // process socket changes
             {
                 std::unique_lock< std::mutex > lock( m_mutex );
-                for( auto i = m_newContainer.begin();
-                     i != m_newContainer.end();
-                     i = m_newContainer.erase( i ) )
+                // add new sockets
+                while( !m_addList.empty() )
                 {
-                    {
-                        struct epoll_event event;
-                        event.events = EPOLLIN;
-                        event.data.ptr = *i;
-                        if( epoll_ctl( m_epoll, EPOLL_CTL_ADD, (*i)->getSocket()->getHandle(), &event ) == -1 )
-                            std::cout << "EPOLL-ADD_ERROR: " << errno << std::endl;
-                    }
+                    auto container = m_addList.front();
+
+                    struct epoll_event event;
+                    event.events = EPOLLIN;
+                    event.data.ptr = container;
+                    epoll_ctl( m_epoll, EPOLL_CTL_ADD, container->getSocket()->getHandle(), &event );
 
                     m_callback( std::unique_ptr< NetEvent >( new NetEvent(
-                        NetEvent::Type::CONNECT, *i ) ) );
+                        NetEvent::Type::CONNECT, container ) ) );
+
+                    m_addList.pop_front();
+                }
+
+                // remove socket handles
+                while( !m_removeList.empty() )
+                {
+                    auto handle = m_removeList.front();
+
+                    epoll_ctl( m_epoll, EPOLL_CTL_DEL, handle, NULL );
+
+                    m_removeList.pop_front();
                 }
             }
 
@@ -204,6 +214,9 @@
 
             switch( num )
             {
+                case 0: // no events
+                    break;
+
                 case -1: // an error occured
                 {
                     switch( errno )
@@ -215,9 +228,6 @@
                             return;
                     }
                 } break;
-
-                case 0: // no events
-                    break;
 
                 default: // events available
                 {
@@ -245,7 +255,7 @@
                             }
                             catch( TCPSocket::Error& e )
                             {
-                                epoll_ctl( m_epoll, EPOLL_CTL_DEL, container->getSocket()->getHandle(), NULL );
+                                m_removeList.push_back( container->getSocket()->getHandle() );
 
                                 switch( e )
                                 {
@@ -274,7 +284,35 @@
 
         // add socket to event list
         std::unique_lock< std::mutex > lock( m_mutex );
-        m_newContainer.push_back( container );
+
+        for( auto i = m_removeList.begin(); i != m_removeList.end(); )
+        {
+            if( *i == container->getSocket()->getHandle() )
+                i = m_removeList.erase( i );
+            else
+                ++i;
+        }
+
+        m_addList.push_back( container );
+
+        // notify waiting thread
+        char buff = '0';
+        write( m_pipe[ 1 ], &buff, 1 );
+    }
+
+    void PacketSelector::remove( SocketContainer* container )
+    {
+        std::unique_lock< std::mutex > lock( m_mutex );
+
+        for( auto i = m_addList.begin(); i != m_addList.end(); )
+        {
+            if( *i == container )
+                i = m_addList.erase( i );
+            else
+                ++i;
+        }
+
+        m_removeList.push_back( container->getSocket()->getHandle() );
 
         // notify waiting thread
         char buff = '0';

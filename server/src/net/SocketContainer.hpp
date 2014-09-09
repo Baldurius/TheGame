@@ -7,5 +7,5 @@ class SocketContainer
     public:
         virtual ~SocketContainer() { }
 
-        virtual const TCPSocket* getSocket() const = 0; 
+        virtual TCPSocket* getSocket() = 0; 
 };

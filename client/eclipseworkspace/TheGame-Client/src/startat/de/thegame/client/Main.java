@@ -1,5 +1,6 @@
 package startat.de.thegame.client;
 
+import java.io.*;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -10,61 +11,42 @@ import java.nio.*;
 
 public class Main {
 	public static void main(String[] args) {
-		String host = args[0];
-		Integer port = Integer.valueOf(args[1]);
-		
-		System.out.println("attempt send to " + host + ":" + port);
-		
-		InetAddress addr;
+        String host = "127.0.0.1";
+        Integer port = 7777;
+
+        if(args.length > 0)
+            host = args[0];
+
+        if(args.length > 1)
+            port = Integer.valueOf(args[1]);
 		
 		try {
 			System.out.println("Resolving Address");
-			addr = InetAddress.getByName(host);
+			InetAddress addr = InetAddress.getByName(host);
 			
 			System.out.println("Connecting Port");
 			Socket sock = new Socket(addr, port);
 			
-			System.out.println("Creating Reader and receiving");
-			
-			
-			BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-			String text = in.readLine();
-			System.out.println("Received: " + text);
-			
-			System.out.println("Creating Writer and sending");
+			{ System.out.println("Receiving:");
+                DataInputStream in = new DataInputStream(sock.getInputStream());
+                int packetSize = in.readInt();
+                System.out.println("    Size of packet: " + packetSize);
+                int packetType = in.readInt();
+                System.out.println("    Type of packet: " + packetType);
+            }
 
 			Thread.sleep(1000);
 			
-			DataOutputStream dataout = new DataOutputStream(sock.getOutputStream());
+            { System.out.println("Sending:");
+                DataOutputStream out = new DataOutputStream(sock.getOutputStream());
+                out.writeInt(4);
+                out.writeInt(0x00000001);
+                out.flush();
+                sock.getOutputStream().flush();
+            }
 
-            // Little endian
-            /*
-            ByteBuffer buffer = ByteBuffer.allocate( 13 );
-            buffer.order( ByteOrder.BIG_ENDIAN );
-            buffer.putInt( 9 );
-            buffer.putInt( 5 );
-            buffer.put( new String( "Hallo" ).getBytes() );
-            dataout.write( buffer.array(), 0, buffer.capacity() );
-            */
-
-            // Big endian
-            dataout.writeInt( 9 );
-            dataout.writeInt( 5 );
-            dataout.writeBytes( "Hallo" );
+			Thread.sleep(5000);
 			
-			dataout.flush();
-			
-//			BufferedWriter out = new BufferedWriter(new OutputStreamWriter(sock.getOutputStream()));
-//			out.write("Hallo");
-//			// zeilenumbruch senden
-//			out.newLine();
-//			out.flush();
-//			
-			
-			Thread.sleep(1000);
-			
-			in.close();
-			dataout.close();
 			sock.close();
 			
 		} catch (NumberFormatException e) {
@@ -77,9 +59,5 @@ public class Main {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
-		
-		
 	}
 }
