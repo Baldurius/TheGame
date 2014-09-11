@@ -145,9 +145,11 @@
     #include <unistd.h>
     #include <stdio.h>
 
-    PacketSelector::NetEvent::NetEvent( Type type, SocketContainer* source )
+    PacketSelector::NetEvent::NetEvent(
+        Type type,
+        std::shared_ptr< SocketContainer > source )
         : m_type( type )
-        , m_source( source )
+        , m_source( std::move( source ) )
     {
     }
 
@@ -184,34 +186,35 @@
             // process socket changes
             {
                 std::unique_lock< std::mutex > lock( m_mutex );
-                // add new sockets
-                while( !m_addList.empty() )
+                while( !m_changeList.empty() )
                 {
-                    auto container = m_addList.front();
-                    m_addList.pop_front();
-
+                    auto& tup = m_changeList.front();
                     lock.unlock();
 
-                    struct epoll_event event;
-                    event.events = EPOLLIN;
-                    event.data.ptr = container;
-                    epoll_ctl( m_epoll, EPOLL_CTL_ADD, container->getSocket()->getHandle(), &event );
+                    switch( std::get< 0 >( tup ) )
+                    {
+                        case Change::ADD:
+                        {
+                            auto container = std::get< 1 >( tup );
+                            struct epoll_event event;
+                            event.events = EPOLLIN;
+                            event.data.ptr = container;
+                            epoll_ctl( m_epoll, EPOLL_CTL_ADD, (*container)->getSocket()->getHandle(), &event );
 
-                    m_callback( std::unique_ptr< NetEvent >( new NetEvent(
-                        NetEvent::Type::CONNECT, container ) ) );
+                            m_callback( std::unique_ptr< NetEvent >( new NetEvent(
+                                NetEvent::Type::CONNECT, *container ) ) );
+                        } break;
+
+                        case Change::REMOVE:
+                        {
+                            auto container = std::get< 1 >( tup );
+                            epoll_ctl( m_epoll, EPOLL_CTL_DEL, (*container)->getSocket()->getHandle(), NULL );
+                            delete container;
+                        } break;
+                    }
 
                     lock.lock();
-                }
-
-                // remove socket handles
-                while( !m_removeList.empty() )
-                {
-                    auto handle = m_removeList.front();
-
-                    m_removeList.pop_front();
-
-                    epoll_ctl( m_epoll, EPOLL_CTL_DEL, handle, NULL );
-
+                    m_changeList.pop_front();
                 }
             }
 
@@ -236,8 +239,7 @@
 
                 default: // events available
                 {
-                    // only do one event at a time to directly apply list changes
-                    for( int i = 0; i < 1 /* num */; ++i )
+                    for( int i = 0; i < num; ++i )
                     {
                         if( m_events[ i ].data.ptr == NULL )
                         {
@@ -248,28 +250,29 @@
                         }
                         else
                         {
-                            SocketContainer* container = static_cast< SocketContainer* >( m_events[ i ].data.ptr );
+                            auto container = static_cast< std::shared_ptr< SocketContainer >* >( m_events[ i ].data.ptr );
 
                             try
                             {
-                                std::unique_ptr< IPacket > packet( IPacket::fromTCPSocket( container->getSocket() ) );
+                                std::unique_ptr< IPacket > packet( IPacket::fromTCPSocket( (*container)->getSocket() ) );
 
                                 m_callback( std::unique_ptr< NetEvent >( new NetEvent_Impl< IPacket >(
                                     NetEvent::Type::PACKET,
-                                    container,
+                                    *container,
                                     std::move( packet ) ) ) );
                             }
                             catch( TCPSocket::Error& e )
                             {
-                                m_removeList.push_back( container->getSocket()->getHandle() );
+                                m_changeList.push_back( std::make_tuple(
+                                    Change::REMOVE, container ) );
 
                                 switch( e )
                                 {
                                     case TCPSocket::Error::CLOSED:
-                                        m_callback( std::unique_ptr< NetEvent >( new NetEvent( NetEvent::Type::CLOSED, container ) ) );
+                                        m_callback( std::unique_ptr< NetEvent >( new NetEvent( NetEvent::Type::CLOSED, *container ) ) );
                                         break;
                                     case TCPSocket::Error::BROKEN:
-                                        m_callback( std::unique_ptr< NetEvent >( new NetEvent( NetEvent::Type::BROKEN, container ) ) );
+                                        m_callback( std::unique_ptr< NetEvent >( new NetEvent( NetEvent::Type::BROKEN, *container ) ) );
                                         break;
                                     default:
                                         break;
@@ -282,7 +285,7 @@
         }
     }
 
-    void PacketSelector::add( SocketContainer* container )
+    void PacketSelector::add( std::shared_ptr< SocketContainer > container )
     {
         // set socket into nonblocking mode
         int flags = fcntl( container->getSocket()->getHandle(), F_GETFL, 0 );
@@ -291,34 +294,20 @@
         // add socket to event list
         std::unique_lock< std::mutex > lock( m_mutex );
 
-        for( auto i = m_removeList.begin(); i != m_removeList.end(); )
-        {
-            if( *i == container->getSocket()->getHandle() )
-                i = m_removeList.erase( i );
-            else
-                ++i;
-        }
-
-        m_addList.push_back( container );
+        m_changeList.push_back( std::make_tuple(
+            Change::ADD, new std::shared_ptr< SocketContainer >( std::move( container ) ) ) );
 
         // notify waiting thread
         char buff = '0';
         write( m_pipe[ 1 ], &buff, 1 );
     }
 
-    void PacketSelector::remove( SocketContainer* container )
+    void PacketSelector::remove( std::shared_ptr< SocketContainer > container )
     {
         std::unique_lock< std::mutex > lock( m_mutex );
 
-        for( auto i = m_addList.begin(); i != m_addList.end(); )
-        {
-            if( *i == container )
-                i = m_addList.erase( i );
-            else
-                ++i;
-        }
-
-        m_removeList.push_back( container->getSocket()->getHandle() );
+        m_changeList.push_back( std::make_tuple(
+            Change::REMOVE, new std::shared_ptr< SocketContainer >( std::move( container ) ) ) );
 
         // notify waiting thread
         char buff = '0';

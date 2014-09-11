@@ -4,29 +4,28 @@
 
 #include <memory>
 
+class Connection;
+
 class Client
-    : public SocketContainer
 {
     public:
         Client(
-            std::unique_ptr< TCPSocket > socket,
+            std::shared_ptr< Connection > connection,
             std::string name );
 
-        // SocketContainer
-        virtual TCPSocket* getSocket() override; 
-
+        const std::shared_ptr< Connection >& getConnection() const;
         const std::string& getName() const;
 
     private:
-        std::unique_ptr< TCPSocket > m_socket;
+        std::shared_ptr< Connection > m_connection;
         std::string m_name;
 };
 
 
 
-inline TCPSocket* Client::getSocket()
+inline const std::shared_ptr< Connection >& Client::getConnection() const
 {
-    return m_socket.get();
+    return m_connection;
 }
 
 inline const std::string& Client::getName() const

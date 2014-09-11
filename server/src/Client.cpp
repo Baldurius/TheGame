@@ -3,8 +3,8 @@
 #include <net/TCPSocket.hpp>
 
 Client::Client(
-    std::unique_ptr< TCPSocket > socket,
+    std::shared_ptr< Connection > connection,
     std::string name )
-    : m_socket( std::move( socket ) )
+    : m_connection( std::move( connection ) )
     , m_name( std::move( name ) )
 { }

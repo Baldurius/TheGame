@@ -6,13 +6,16 @@
 #include <thread>
 
 class TCPSocket;
+class Receiver;
+class Connection;
 
 class Acceptor
 {
     public:
         Acceptor(
             uint16_t port,
-            std::function< void ( std::unique_ptr< TCPSocket > ) > callback );
+            std::shared_ptr< Receiver > receiver,
+            std::function< void ( std::shared_ptr< Connection > ) > callback );
 
         ~Acceptor();
 
@@ -21,7 +24,8 @@ class Acceptor
     private:
         bool m_running;
         uint16_t m_port;
-        std::function< void ( std::unique_ptr< TCPSocket > ) > m_callback;
+        std::shared_ptr< Receiver > m_receiver;
+        std::function< void ( std::shared_ptr< Connection > ) > m_callback;
         mutable std::mutex m_mutex;
         std::thread m_thread;
 };

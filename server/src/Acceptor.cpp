@@ -2,12 +2,16 @@
 
 #include <net/Listener.hpp>
 #include <net/TCPSocket.hpp>
+#include <Receiver.hpp>
+#include <Connection.hpp>
 
 Acceptor::Acceptor(
     uint16_t port,
-    std::function< void ( std::unique_ptr< TCPSocket > ) > callback )
+    std::shared_ptr< Receiver > receiver,
+    std::function< void ( std::shared_ptr< Connection > ) > callback )
     : m_running( true )
     , m_port( port )
+    , m_receiver( std::move( receiver ) )
     , m_callback( std::move( callback ) )
     , m_thread( std::bind( &Acceptor::run, this ) )
 {
@@ -35,7 +39,10 @@ void Acceptor::run()
 
         // no lock needed because listener and m_callback never change
         auto socket = listener->accept();
-        m_callback( std::move( socket ) );
+        auto connection = std::make_shared< Connection >(
+            m_receiver, std::move( socket ) );
+        m_receiver->add( connection );
+        m_callback( std::move( connection ) );
 
         lock.lock();
     }

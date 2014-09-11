@@ -5,18 +5,19 @@
 #include <mutex>
 #include <thread>
 
-class SocketContainer;
+class Connection;
 
 class Receiver
 {
     public:
-        Receiver(
-            std::function< void ( std::unique_ptr< PacketSelector::NetEvent > ) > callback );
+        Receiver();
 
         ~Receiver();
 
-        void add( SocketContainer* container );
-        void remove( SocketContainer* container );
+        void add( std::shared_ptr< Connection > connection );
+        void remove( std::shared_ptr< Connection > connection );
+
+        void netEvent( std::unique_ptr< PacketSelector::NetEvent > event );
 
         void run();
 

@@ -36,14 +36,17 @@ void Application::run()
 {
     Socket::init();
 
-    std::unique_ptr< Lobby > lobby( new Lobby() );
+    auto receiver = std::make_shared< Receiver >();
 
-    std::unique_ptr< Authenticator > authenticator( new Authenticator(
-        std::bind( &Lobby::add, lobby.get(), std::placeholders::_1 ) ) );
+    auto lobby = std::make_shared< Lobby >();
 
-    std::unique_ptr< Acceptor > acceptor( new Acceptor(
+    auto authenticator = std::make_shared< Authenticator >(
+        std::bind( &Lobby::add, lobby.get(), std::placeholders::_1 ) );
+
+    auto acceptor = std::make_shared< Acceptor >(
         7777,
-        std::bind( &Authenticator::add, authenticator.get(), std::placeholders::_1 ) ) );
+        receiver,
+        std::bind( &Authenticator::add, authenticator.get(), std::placeholders::_1 ) );
 
     while( true )
     { }

@@ -1,9 +1,11 @@
 #include "Receiver.hpp"
 
-Receiver::Receiver(
-    std::function< void ( std::unique_ptr< PacketSelector::NetEvent > ) > callback )
+#include <Connection.hpp>
+
+Receiver::Receiver()
     : m_running( true )
-    , m_packetSelector( std::move( callback ) )
+    , m_packetSelector(
+        std::bind( &Receiver::netEvent, this, std::placeholders::_1 ) )
     , m_thread( std::bind( &Receiver::run, this ) )
 { }
 
@@ -17,14 +19,20 @@ Receiver::~Receiver()
     m_thread.join();
 }
 
-void Receiver::add( SocketContainer* container )
+void Receiver::add( std::shared_ptr< Connection > connection )
 {
-    m_packetSelector.add( container );
+    m_packetSelector.add( std::move( connection ) );
 }
 
-void Receiver::remove( SocketContainer* container )
+void Receiver::remove( std::shared_ptr< Connection > connection )
 {
-    m_packetSelector.remove( container );
+    m_packetSelector.remove( std::move( connection ) );
+}
+
+void Receiver::netEvent( std::unique_ptr< PacketSelector::NetEvent > event )
+{
+    auto connection = std::static_pointer_cast< Connection >( event->getSource() );
+    connection->netEvent( std::move( event ) );
 }
 
 void Receiver::run()

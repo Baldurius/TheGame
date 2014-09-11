@@ -31,12 +31,18 @@ class PacketSelector
 
         void wait();
 
-        void add( SocketContainer* container );
-        void remove( SocketContainer* container );
+        void add( std::shared_ptr< SocketContainer > container );
+        void remove( std::shared_ptr< SocketContainer > container );
 
         void notify();
 
     private:
+        enum class Change
+        {
+            ADD,
+            REMOVE
+        };
+
         bool m_running;
         std::function< void ( std::unique_ptr< NetEvent > ) > m_callback;
 
@@ -53,8 +59,9 @@ class PacketSelector
         struct epoll_event m_events[ 64 ];
         std::mutex m_mutex;
 
-        std::list< SocketContainer* > m_addList;
-        std::list< int > m_removeList;
+        std::list< std::tuple<
+            Change,
+            std::shared_ptr< SocketContainer >* > > m_changeList;
     #endif
 };
 
@@ -71,27 +78,30 @@ class PacketSelector::NetEvent
             CONNECT
         };
 
-        NetEvent( Type type, SocketContainer* source );
+        NetEvent( Type type, std::shared_ptr< SocketContainer > source );
 
         virtual ~NetEvent() { }
 
         Type getType() const;
 
-        SocketContainer* getSource() const;
+        const std::shared_ptr< SocketContainer >& getSource() const;
 
         template< class T >
         std::unique_ptr< T > getData();
 
     private:
         Type m_type;
-        SocketContainer* m_source;
+        std::shared_ptr< SocketContainer > m_source;
 };
 
 template< class T >
 class PacketSelector::NetEvent_Impl : public PacketSelector::NetEvent
 {
     public:
-        NetEvent_Impl( Type type, SocketContainer* source, std::unique_ptr< T > data );
+        NetEvent_Impl(
+            Type type,
+            std::shared_ptr< SocketContainer > source,
+            std::unique_ptr< T > data );
 
         std::unique_ptr< T > getData();
 
@@ -106,7 +116,7 @@ inline PacketSelector::NetEvent::Type PacketSelector::NetEvent::getType() const
     return m_type;
 }
 
-inline SocketContainer* PacketSelector::NetEvent::getSource() const
+inline const std::shared_ptr< SocketContainer >& PacketSelector::NetEvent::getSource() const
 {
     return m_source;
 }
@@ -121,8 +131,11 @@ inline std::unique_ptr< T > PacketSelector::NetEvent::getData()
 }
 
 template< class T >
-inline PacketSelector::NetEvent_Impl< T >::NetEvent_Impl( Type type, SocketContainer* source, std::unique_ptr< T > data )
-    : NetEvent( type, source )
+inline PacketSelector::NetEvent_Impl< T >::NetEvent_Impl(
+    Type type,
+    std::shared_ptr< SocketContainer > source,
+    std::unique_ptr< T > data )
+    : NetEvent( type, std::move( source ) )
     , m_data( std::move( data ) )
 {
 }
