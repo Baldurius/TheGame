@@ -11,7 +11,7 @@ import startat.de.thegame.client.communication.SERVER_MESSAGE;
 
 public class Main {
     public static void main(String[] args) {	
-    	String host = args.length > 1 ? String.valueOf( args[ 0 ] ) : "127.0.0.1";
+    	String host = args.length > 0 ? String.valueOf( args[ 0 ] ) : "127.0.0.1";
         Integer port = args.length > 1 ? Integer.valueOf( args[ 1 ] ) : 7777;
         
         try {
