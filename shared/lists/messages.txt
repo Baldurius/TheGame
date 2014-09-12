@@ -1,7 +1,5 @@
-Server
+enum Server
     LOGIN 1
-end
 
-Client
+enum Client
     HELLO 1
-end
