@@ -1,24 +1,18 @@
 package startat.de.thegame.client;
 
 import java.io.*;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.nio.*;
+
+import startat.de.thegame.client.communication.CLIENT_MESSAGE;
+import startat.de.thegame.client.communication.InPacket;
+import startat.de.thegame.client.communication.OutPacket;
+import startat.de.thegame.client.communication.SERVER_MESSAGE;
 
 public class Main {
-    public static void main(String[] args) {
-        String host = "127.0.0.1";
-        Integer port = 7777;
-
-        if(args.length > 0)
-            host = args[0];
-
-        if(args.length > 1)
-            port = Integer.valueOf(args[1]);
+    public static void main(String[] args) {	
+    	String host = args.length > 0 ? String.valueOf( args[ 0 ] ) : "127.0.0.1";
+        Integer port = args.length > 1 ? Integer.valueOf( args[ 1 ] ) : 7777;
         
         try {
             System.out.println("Resolving Address");
@@ -26,13 +20,23 @@ public class Main {
             
             System.out.println("Connecting Port");
             Socket sock = new Socket(addr, port);
+          
+            InPacket inPacket = new InPacket();
+            inPacket.receive(sock);
+            if(inPacket.readType() == CLIENT_MESSAGE.HELLO){
+            	String s = inPacket.readString();
+            	System.out.println(s);
+            }
             
+            
+            OutPacket outPacket = new OutPacket();
+            outPacket.writeType(SERVER_MESSAGE.LOGIN);
+            outPacket.writeString("StenTheJavaGuy");
+            outPacket.send(sock);
+            
+            /*
             { System.out.println("Receiving:");
-                DataInputStream in = new DataInputStream(sock.getInputStream());
-                int packetSize = in.readInt();
-                System.out.println("    Size of packet: " + packetSize);
-                int packetType = in.readInt();
-                System.out.println("    Type of packet: " + packetType);
+          
             }
 
             Thread.sleep(1000);
@@ -44,21 +48,17 @@ public class Main {
                 out.writeInt(8);            // name length
                 out.writeBytes("Testuser"); // name
                 out.flush();
-                sock.getOutputStream().flush();
             }
 
             while(true)
             { }
-            
-            // sock.close();
+            */
+            sock.close();
             
         } catch (NumberFormatException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
