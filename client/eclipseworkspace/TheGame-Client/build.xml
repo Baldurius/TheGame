@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     12.09.2014 20:57:26                                                        
+
+     project    
+     description
+                   
+     Aron                                                                
+     ====================================================================== -->
+<project name="project" default="default">
+	<description>
+            description
+    </description>
+
+	<!-- ================================= 
+          target: default              
+         ================================= -->
+	<target name="default" depends="depends" description="description">
+
+	</target>
+
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: depends                      
+         - - - - - - - - - - - - - - - - - -->
+	<target name="depends">
+		<property name="parserDir" value="I:\TheGame\shared\parser" />
+	</target>
+
+	<!-- ================================= 
+          target: createEnumerations              
+         ================================= -->
+	<target name="createEnumerations" depends="depends" description="description">
+		<java classname="EnumParser"  fork="true" dir="I:\TheGame\shared\parser">
+			<arg line="Java ..\lists\messages.txt ../../client/eclipseworkspace/TheGame-Client/src/startat/de/thegame/client/communication/%s.java"/>
+			<classpath>
+				<pathelement path="${parserDir}" />
+			</classpath>
+		</java>
+	</target>
+
+
+</project>

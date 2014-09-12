@@ -1,5 +1,5 @@
-enum Server
+enum ServerMessage
     LOGIN 1
 
-enum Client
+enum ClientMessage
     HELLO 1
