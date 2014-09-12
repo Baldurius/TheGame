@@ -1,5 +1,5 @@
 enum ServerMessage
-    LOGIN 1
+    LOGIN 0
 
 enum ClientMessage
-    HELLO 1
+    HELLO 0

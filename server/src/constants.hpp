@@ -2,10 +2,10 @@
 
 enum class ServerMessage : uint32_t
 {
-    LOGIN = 0,
+    LOGIN = 1,
 };
 
 enum class ClientMessage : uint32_t
 {
-    HELLO = 0,
+    HELLO = 1,
 };
