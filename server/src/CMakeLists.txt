@@ -26,3 +26,11 @@ ADD_EXECUTABLE(
     server
     ${SOURCE_FILES}
 )
+
+
+SET( PARSER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../shared/parser" )
+ADD_CUSTOM_TARGET(
+    ParseEnums
+    COMMAND java -cp "${PARSER_DIR}/" EnumParser "C++" "${PARSER_DIR}/../lists/messages.txt" "${CMAKE_CURRENT_SOURCE_DIR}/constants.hpp" )
+ADD_DEPENDENCIES( server ParseEnums )
+

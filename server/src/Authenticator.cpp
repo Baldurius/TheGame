@@ -31,7 +31,7 @@ class Authenticator::LoginHandler
                     std::cout << "Authentication..." << std::endl;
 
                     OPacket packet;
-                    packet.write( CMsg::HELLO );
+                    packet.write( ClientMessage::HELLO );
                     packet.write( std::string( "Bitte logge dich ein!" ) );
                     packet.send( m_connection->getSocket() );
                 } break;
@@ -46,9 +46,9 @@ class Authenticator::LoginHandler
                 case PacketSelector::NetEvent::Type::PACKET:
                 {
                     const auto& packet = event->getData< IPacket >();
-                    switch( packet->read< SMsg >() )
+                    switch( packet->read< ServerMessage >() )
                     {
-                        case SMsg::LOGIN:
+                        case ServerMessage::LOGIN:
                         {
                             std::string name = packet->read< std::string >();
 
