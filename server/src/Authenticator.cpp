@@ -32,6 +32,7 @@ class Authenticator::LoginHandler
 
                     OPacket packet;
                     packet.write( CMsg::HELLO );
+                    packet.write( std::string( "Bitte logge dich ein!" ) );
                     packet.send( m_connection->getSocket() );
                 } break;
 
