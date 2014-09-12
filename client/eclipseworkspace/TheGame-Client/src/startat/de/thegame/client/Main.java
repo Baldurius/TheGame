@@ -28,31 +28,11 @@ public class Main {
             	System.out.println(s);
             }
             
-            
             OutPacket outPacket = new OutPacket();
             outPacket.writeType(SERVER_MESSAGE.LOGIN);
             outPacket.writeString("StenTheJavaGuy");
             outPacket.send(sock);
             
-            /*
-            { System.out.println("Receiving:");
-          
-            }
-
-            Thread.sleep(1000);
-            
-            { System.out.println("Loggin in:");
-                DataOutputStream out = new DataOutputStream(sock.getOutputStream());
-                out.writeInt(16);           // packet size
-                out.writeInt(0x00000001);   // packet type (LOGIN)
-                out.writeInt(8);            // name length
-                out.writeBytes("Testuser"); // name
-                out.flush();
-            }
-
-            while(true)
-            { }
-            */
             sock.close();
             
         } catch (NumberFormatException e) {
