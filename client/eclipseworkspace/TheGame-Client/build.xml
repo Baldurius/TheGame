@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     12.09.2014 20:57:26                                                        
+
+     project    
+     description
+                   
+     Aron                                                                
+     ====================================================================== -->
+<project name="project" default="default">
+	<description>
+            description
+    </description>
+
+	<!-- ================================= 
+          target: default              
+         ================================= -->
+	<target name="default" depends="depends" description="description">
+
+	</target>
+
+	<!-- - - - - - - - - - - - - - - - - - 
+          target: depends                      
+         - - - - - - - - - - - - - - - - - -->
+	<target name="depends">
+		<property name="parserDir" value="I:\TheGame\shared\parser" />
+
+		<property name="parserDir2" value="I:\TheGame\shared\parser" />
+	</target>
+
+	<!-- ================================= 
+          target: createEnumerations              
+         ================================= -->
+	<target name="createEnumerations" depends="depends" description="description">
+		<java classname="Parser" fork="true" dir="${parserDir}">
+			<classpath>
+				<pathelement path="${parserDir}" />
+			</classpath>
+		</java>
+	</target>
+
+
+</project>
