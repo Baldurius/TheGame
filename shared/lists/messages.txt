@@ -1,0 +1,7 @@
+Server
+    LOGIN 1
+end
+
+Client
+    HELLO 1
+end
