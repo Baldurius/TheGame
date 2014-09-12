@@ -4,10 +4,10 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import startat.de.thegame.client.communication.CLIENT_MESSAGE;
+import startat.de.thegame.client.communication.ClientMessage;
 import startat.de.thegame.client.communication.InPacket;
 import startat.de.thegame.client.communication.OutPacket;
-import startat.de.thegame.client.communication.SERVER_MESSAGE;
+import startat.de.thegame.client.communication.ServerMessage;
 
 public class Main {
     public static void main(String[] args) {	
@@ -23,13 +23,13 @@ public class Main {
           
             InPacket inPacket = new InPacket();
             inPacket.receive(sock);
-            if(inPacket.readType() == CLIENT_MESSAGE.HELLO){
+            if(inPacket.readType() == ClientMessage.HELLO){
             	String s = inPacket.readString();
             	System.out.println(s);
             }
             
             OutPacket outPacket = new OutPacket();
-            outPacket.writeType(SERVER_MESSAGE.LOGIN);
+            outPacket.writeType(ServerMessage.LOGIN);
             outPacket.writeString("StenTheJavaGuy");
             outPacket.send(sock);
             

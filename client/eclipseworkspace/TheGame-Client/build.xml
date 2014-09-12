@@ -24,15 +24,14 @@
          - - - - - - - - - - - - - - - - - -->
 	<target name="depends">
 		<property name="parserDir" value="I:\TheGame\shared\parser" />
-
-		<property name="parserDir2" value="I:\TheGame\shared\parser" />
 	</target>
 
 	<!-- ================================= 
           target: createEnumerations              
          ================================= -->
 	<target name="createEnumerations" depends="depends" description="description">
-		<java classname="Parser" fork="true" dir="${parserDir}">
+		<java classname="EnumParser"  fork="true" dir="I:\TheGame\shared\parser">
+			<arg line="Java ..\lists\messages.txt ../../client/eclipseworkspace/TheGame-Client/src/startat/de/thegame/client/communication/%s.java"/>
 			<classpath>
 				<pathelement path="${parserDir}" />
 			</classpath>
