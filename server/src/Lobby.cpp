@@ -25,12 +25,22 @@ class Lobby::ClientWrapper
 
         void netEvent( std::unique_ptr< PacketSelector::NetEvent > event )
         {
-            m_lobby->netEvent( shared_from_this(), std::move( event ) );
+            std::unique_lock< std::mutex > lock( m_lobby->m_mutex );
+            m_lobby->m_events.push_back( std::make_tuple(
+                shared_from_this(),
+                std::move( event ) ) );
+            m_lobby->m_condition.notify_all();
         }
 
-        std::unique_ptr< Client >& getClient()
+        const std::unique_ptr< Client >& getClient() const
         {
             return m_client;
+        }
+
+        std::unique_ptr< Client > detachClient()
+        {
+            m_client->getConnection()->setCallback();
+            return std::move( m_client );
         }
 
     private:
@@ -71,17 +81,6 @@ void Lobby::add( std::unique_ptr< Client > client )
     m_condition.notify_all();
 }
 
-void Lobby::netEvent(
-    const std::shared_ptr< ClientWrapper >& wrapper,
-    std::unique_ptr< PacketSelector::NetEvent > event )
-{
-    std::unique_lock< std::mutex > lock( m_mutex );
-    m_events.push_back( std::make_tuple(
-        std::move( wrapper ),
-        std::move( event ) ) );
-    m_condition.notify_all();
-}
-
 void Lobby::run()
 {
     std::unique_lock< std::mutex > lock( m_mutex );
@@ -101,6 +100,19 @@ void Lobby::run()
                 case PacketSelector::NetEvent::Type::CONNECT:
                 {
                     std::cout << wrapper->getClient()->getName() << " joined the lobby!" << std::endl; 
+
+                    if( m_clients.size() >= 2 )
+                    {
+                        auto iterator = m_clients.begin();
+                        auto player1 = (*iterator)->detachClient();
+
+                        iterator = m_clients.erase( iterator );
+                        auto player2 = (*iterator)->detachClient();
+
+                        Game::create(
+                            std::move( player1 ),
+                            std::move( player2 ) );
+                    }
                 } break;
 
                 case PacketSelector::NetEvent::Type::BROKEN:

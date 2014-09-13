@@ -20,7 +20,8 @@ class Connection
         void destroy();
 
         void setCallback(
-            std::function< void ( std::unique_ptr< PacketSelector::NetEvent > ) > callback );
+            std::function< void ( std::unique_ptr< PacketSelector::NetEvent > ) > callback =
+            std::function< void ( std::unique_ptr< PacketSelector::NetEvent > ) >() );
 
         void netEvent( std::unique_ptr< PacketSelector::NetEvent > event );
 

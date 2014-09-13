@@ -25,12 +25,14 @@ FILE(
 ADD_EXECUTABLE(
     server
     ${SOURCE_FILES}
+    "${CMAKE_CURRENT_SOURCE_DIR}/constants.hpp"
 )
 
-
+# generate cross platform enums for client and server
 SET( PARSER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../shared/parser" )
-ADD_CUSTOM_TARGET(
-    ParseEnums
-    COMMAND java -cp "${PARSER_DIR}/" EnumParser "C++" "${PARSER_DIR}/../lists/messages.txt" "${CMAKE_CURRENT_SOURCE_DIR}/constants.hpp" )
-ADD_DEPENDENCIES( server ParseEnums )
+ADD_CUSTOM_COMMAND(
+    DEPENDS "${PARSER_DIR}/../lists/messages.txt"
+    OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/constants.hpp"
+    COMMAND java
+    ARGS -cp "${PARSER_DIR}/" EnumParser "C++" "${PARSER_DIR}/../lists/messages.txt" "${CMAKE_CURRENT_SOURCE_DIR}/constants.hpp" )
 

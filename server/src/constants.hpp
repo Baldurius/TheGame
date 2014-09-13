@@ -2,10 +2,11 @@
 
 enum class ServerMessage : uint32_t
 {
-    LOGIN = 1,
+    LOGIN = 0x00000000,
 };
 
 enum class ClientMessage : uint32_t
 {
-    HELLO = 1,
+    GAME_START = 0x00000001,
+    HELLO = 0x00000000,
 };

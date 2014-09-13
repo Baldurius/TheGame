@@ -1,5 +1,6 @@
 enum ServerMessage
-    LOGIN 0
+    LOGIN           0x00000000
 
 enum ClientMessage
-    HELLO 0
+    HELLO           0x00000000
+    GAME_START      0x00000001
