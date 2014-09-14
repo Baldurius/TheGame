@@ -9,6 +9,7 @@
 #include <Authenticator.hpp>
 #include <Acceptor.hpp>
 #include <Lobby.hpp>
+#include <game/Game.hpp>
 
 #include <iostream>
 
@@ -47,6 +48,8 @@ void Application::run()
         7777,
         receiver,
         std::bind( &Authenticator::add, authenticator.get(), std::placeholders::_1 ) );
+
+    Game::create( std::unique_ptr< Client >(), std::unique_ptr< Client >() );
 
     while( true )
     { }

@@ -52,7 +52,7 @@ class Game::Player
 {
     public:
         Player(
-            std::shared_ptr< Game > game,
+            Game* game,
             std::unique_ptr< Client > client );
 
         void netEvent(
@@ -61,6 +61,6 @@ class Game::Player
         const std::unique_ptr< Client >& getClient() const;
 
     private:
-        std::shared_ptr< Game > m_game;
+        Game* m_game;
         std::unique_ptr< Client > m_client;
 };

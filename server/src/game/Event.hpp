@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
 
 class Event
 {
@@ -17,7 +18,7 @@ class Event
         bool isValid() const;
         const TimePoint& getTimePoint() const;
 
-        void invalidate();
+        virtual void invalidate();
 
         virtual void execute() = 0;
 

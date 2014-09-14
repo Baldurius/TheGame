@@ -7,6 +7,7 @@
 #include <Connection.hpp>
 #include <net/OPacket.hpp>
 #include <game/Event.hpp>
+#include <game/CallbackEvent.hpp>
 
 #include <iostream>
 #include <algorithm>
@@ -29,10 +30,10 @@ Game::Game(
     std::unique_ptr< Client > player1,
     std::unique_ptr< Client > player2 )
     : m_player1( new Player(
-        shared_from_this(),
+        this,
         std::move( player1 ) ) )
     , m_player2( new Player(
-        shared_from_this(),
+        this,
         std::move( player2 ) ) )
     , m_running( true )
     , m_thread( std::bind( &Game::run, this ) )
@@ -47,11 +48,12 @@ void Game::addEvent( std::shared_ptr< Event > event )
 void Game::run()
 {
     // initialize game
+    std::cout << "Starting game..." << std::endl;
     { // inform players about started game
         OPacket packet;
         packet.write( ClientMessage::GAME_START );
-        packet.send( m_player1->getClient()->getConnection()->getSocket() );
-        packet.send( m_player2->getClient()->getConnection()->getSocket() );
+        //packet.send( m_player1->getClient()->getConnection()->getSocket() );
+        //packet.send( m_player2->getClient()->getConnection()->getSocket() );
     }
 
     std::unique_lock< std::mutex > lock( m_mutex );
@@ -89,20 +91,24 @@ void Game::run()
             }
         }
 
-        m_condition.wait( lock );
+        if( !m_gameEvents.empty() )
+            m_condition.wait_until( lock, m_gameEvents.front()->getTimePoint() );
+        else
+            m_condition.wait( lock );
     }
 }
 
 
 
 Game::Player::Player(
-    std::shared_ptr< Game > game,
+    Game* game,
     std::unique_ptr< Client > client )
-    : m_game( std::move( game ) )
+    : m_game( game )
     , m_client( std::move( client ) )
 {
-    m_client->getConnection()->setCallback(
-        std::bind( &Player::netEvent, this, std::placeholders::_1 ) );
+    if( m_client )
+        m_client->getConnection()->setCallback(
+            std::bind( &Player::netEvent, this, std::placeholders::_1 ) );
 }
 
 void Game::Player::netEvent( std::unique_ptr< PacketSelector::NetEvent > event )
