@@ -18,6 +18,8 @@ class Entity
         template< class T >
         std::shared_ptr< T > getComponent() const;
 
+        std::shared_ptr< Game > getGame() const;
+
         virtual void init();
         virtual void destroy();
 
@@ -57,6 +59,11 @@ inline std::shared_ptr< T > Entity::getComponent() const
     return iter == m_components.end()
         ? std::shared_ptr< T >()
         : std::static_pointer_cast< T >( iter->second );
+}
+
+inline std::shared_ptr< Game > Entity::getGame() const
+{
+    return m_game.lock();
 }
 
 template< class T >

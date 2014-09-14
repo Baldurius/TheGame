@@ -7,6 +7,7 @@ class Entity;
 class Component
 {
     public:
+        // order of values specifies the order of initalization
         enum class Type
         {
             POSITION
