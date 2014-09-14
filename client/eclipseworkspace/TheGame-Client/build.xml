@@ -30,8 +30,8 @@
           target: createEnumerations              
          ================================= -->
 	<target name="createEnumerations" depends="depends" description="description">
-		<java classname="EnumParser"  fork="true" dir="I:\TheGame\shared\parser">
-			<arg line="Java ..\lists\messages.txt ../../client/eclipseworkspace/TheGame-Client/src/startat/de/thegame/client/communication/%s.java"/>
+		<java classname="EnumParser" fork="true" dir="I:\TheGame\shared\parser">
+			<arg line="Java ..\lists\messages.txt ../../client/eclipseworkspace/TheGame-Client/src/startat/de/thegame/client/communication/%s.java" />
 			<classpath>
 				<pathelement path="${parserDir}" />
 			</classpath>
