@@ -18,9 +18,11 @@ public class Main {
             System.out.println("Resolving Address");
             InetAddress addr = InetAddress.getByName(host);
             
+            
             System.out.println("Connecting Port");
             Socket sock = new Socket(addr, port);
-          
+//          System.out.println(sock);
+            
             InPacket inPacket = new InPacket();
             inPacket.receive(sock);
             if(inPacket.readType() == ClientMessage.HELLO){

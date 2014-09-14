@@ -19,10 +19,16 @@ public class InPacket {
 			Integer packetSize = in.readInt();
 			byteArray = new byte[packetSize];
 
-			int readbytes = 0;
+			int readBytes = 0;
+			int readBytesOnRun = 0;
+			
 			do {
-				readbytes += in.read(byteArray);
-			} while (readbytes != packetSize);
+				readBytesOnRun = in.read(byteArray,readBytes, packetSize-readBytes);
+				if(readBytesOnRun != -1){
+					readBytes += readBytesOnRun;
+				}
+				
+			} while (readBytes != packetSize);
 
 			data = new DataInputStream(new ByteArrayInputStream(byteArray));
 
