@@ -61,8 +61,8 @@ public class EnumParser
                         BufferedWriter out = new BufferedWriter( new FileWriter(
                             outFile.replace( "%s", entry.getKey() ) ) );
 
-                        out.append( "package startat.de.thegame.client.communication;\n\n")
-						   .append( "public class " )
+                        out.append( "package startat.de.thegame.util.communication;\n\n")
+						   .append( "public final class " )
                            .append( entry.getKey() )
                            .append( "\n{\n" );
                         for( Entry< String, String > en : entry.getValue().entrySet() )

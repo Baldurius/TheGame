@@ -1,15 +1,15 @@
-package startat.de.thegame.client;
+package startat.de.thegame.util;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import startat.de.thegame.client.communication.ClientMessage;
-import startat.de.thegame.client.communication.InPacket;
-import startat.de.thegame.client.communication.OutPacket;
-import startat.de.thegame.client.communication.ServerMessage;
+import startat.de.thegame.util.communication.ClientMessage;
+import startat.de.thegame.util.communication.InPacket;
+import startat.de.thegame.util.communication.OutPacket;
+import startat.de.thegame.util.communication.ServerMessage;
 
-public class Main {
+public class CommunicationTest {
     public static void main(String[] args) {	
     	String host = args.length > 0 ? String.valueOf( args[ 0 ] ) : "127.0.0.1";
         Integer port = args.length > 1 ? Integer.valueOf( args[ 1 ] ) : 7777;

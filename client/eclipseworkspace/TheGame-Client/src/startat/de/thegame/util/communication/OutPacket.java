@@ -1,4 +1,4 @@
-package startat.de.thegame.client.communication;
+package startat.de.thegame.util.communication;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
