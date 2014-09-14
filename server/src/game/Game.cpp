@@ -8,6 +8,7 @@
 #include <net/OPacket.hpp>
 #include <game/Event.hpp>
 #include <game/CallbackEvent.hpp>
+#include <game/entities/Worker.hpp>
 
 #include <iostream>
 #include <algorithm>
@@ -49,6 +50,10 @@ void Game::run()
 {
     // initialize game
     std::cout << "Starting game..." << std::endl;
+
+    auto entity1 = entities::Worker::Creator::create(
+        shared_from_this(), 0.0f, 0.0f );
+
     { // inform players about started game
         OPacket packet;
         packet.write( ClientMessage::GAME_START );
