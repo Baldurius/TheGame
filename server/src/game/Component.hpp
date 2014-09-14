@@ -10,7 +10,8 @@ class Component
         // order of values specifies the order of initalization
         enum class Type
         {
-            POSITION
+            POSITION,
+            ACTOR
         };
 
         virtual ~Component();

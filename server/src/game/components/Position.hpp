@@ -2,6 +2,8 @@
 
 #include <game/Component.hpp>
 
+#include <iostream>
+
 namespace components
 {
     class Position
@@ -48,10 +50,12 @@ namespace components
     inline void Position::setX( float x )
     {
         m_x = x;
+        std::cout << "SetX: " << x << std::endl;
     }
 
     inline void Position::setY( float y )
     {
         m_y = y;
+        std::cout << "SetY: " << y << std::endl;
     }
 }

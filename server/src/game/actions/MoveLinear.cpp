@@ -31,6 +31,8 @@ void MoveLinear::start(
 
 void MoveLinear::finishCallback()
 {
+    m_finishEvent.reset();
+
     auto entity = getEntity();
     if( entity )
     {
